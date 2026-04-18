@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – ExpenseIQ</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+<!-- Mobile top bar -->
+<div class="mobile-bar">
+  <span class="logo-text">💰 ExpenseIQ</span>
+  <button onclick="toggleSidebar()" aria-label="Menu">☰</button>
+</div>
+<div class="overlay-bg" id="overlayBg" onclick="toggleSidebar()"></div>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">💰</div>
+      <span>ExpenseIQ</span>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-name" id="sidebarName">Loading…</div>
+      <div class="user-email" id="sidebarEmail"></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showSection('dashboard')">
+        📊 &nbsp;Dashboard
+      </button>
+      <button class="nav-item" onclick="showSection('expenses')">
+        📋 &nbsp;All Expenses
+      </button>
+      <button class="nav-item" onclick="openAddModal()">
+        ➕ &nbsp;Add Expense
+      </button>
+    </nav>
+
+    <button class="btn-logout" onclick="logout()">
+      🚪 &nbsp;Logout
+    </button>
+  </aside>
+
+  <!-- ── Main Content ────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- ═══ DASHBOARD SECTION ═══ -->
+    <section id="section-dashboard">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p id="greetMsg">Here's your spending overview</p>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Spent</div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-icon">💸</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Month</div>
+          <div class="stat-value" id="statMonth">—</div>
+          <div class="stat-icon">📅</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Transactions</div>
+          <div class="stat-value" id="statCount">—</div>
+          <div class="stat-icon">🔢</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Categories</div>
+          <div class="stat-value" id="statCats">—</div>
+          <div class="stat-icon">🏷️</div>
+        </div>
+      </div>
+
+      <!-- Category + Recent -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-title">🏷️ Category Breakdown</div>
+          <div id="categoryBreakdown">
+            <p style="color:var(--text-muted);font-size:.88rem">Loading…</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🕐 Recent Transactions</div>
+          <div id="recentTxns">
+            <p style="color:var(--text-muted);font-size:.88rem">Loading…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ EXPENSES SECTION ═══ -->
+    <section id="section-expenses" style="display:none">
+      <div class="section-header">
+        <div class="page-header" style="margin:0">
+          <h2 class="section-title">All Expenses</h2>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+          ➕ Add Expense
+        </button>
+      </div>
+
+      <div class="alert" id="expenseAlert" style="margin-bottom:1rem"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="expenseTableBody">
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <div class="empty-icon">💼</div>
+                  <p>Loading expenses…</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Add / Edit Expense Modal ───────────────────────────── -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Expense</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="alert" id="modalAlert"></div>
+
+    <!-- Hidden field for edit mode -->
+    <input type="hidden" id="editId"/>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="expAmount">Amount (₹)</label>
+        <input type="number" id="expAmount" placeholder="0.00" min="0.01" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label for="expDate">Date</label>
+        <input type="date" id="expDate"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="expCategory">Category</label>
+      <select id="expCategory">
+        <option value="">— Select —</option>
+        <option>Food</option>
+        <option>Travel</option>
+        <option>Shopping</option>
+        <option>Entertainment</option>
+        <option>Health</option>
+        <option>Education</option>
+        <option>Bills</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="expDesc">Description <span style="color:var(--text-dim);font-weight:400">(optional)</span></label>
+      <textarea id="expDesc" placeholder="What was this for?"></textarea>
+    </div>
+
+    <div style="display:flex;gap:.75rem;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveExpenseBtn" onclick="saveExpense()">
+        Save Expense
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Delete Modal ────────────────────────────────── -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:.75rem">🗑️</div>
+    <h3 style="font-family:var(--ff-head);margin-bottom:.5rem">Delete Expense?</h3>
+    <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.5rem">This action cannot be undone.</p>
+    <div style="display:flex;gap:.75rem;justify-content:center">
+      <button class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+        Yes, delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  // ── Guard ──────────────────────────────────────────────────
+  requireAuth();
+
+  // ── State ──────────────────────────────────────────────────
+  let allExpenses   = [];
+  let deleteTargetId = null;
+
+  // ── Init ───────────────────────────────────────────────────
+  window.addEventListener("DOMContentLoaded", async () => {
+    const user = getUser();
+    if (user) {
+      document.getElementById("sidebarName").textContent  = user.name;
+      document.getElementById("sidebarEmail").textContent = user.email;
+      document.getElementById("greetMsg").textContent     = `Hello, ${user.name.split(" ")[0]}! Here's your overview.`;
+    }
+    // Set today's date as default in form
+    document.getElementById("expDate").value = new Date().toISOString().slice(0, 10);
+
+    await loadDashboard();
+    await loadExpenses();
+  });
+
+  // ── Navigation ─────────────────────────────────────────────
+  function showSection(name) {
+    document.getElementById("section-dashboard").style.display = name === "dashboard" ? "" : "none";
+    document.getElementById("section-expenses").style.display  = name === "expenses"  ? "" : "none";
+    document.querySelectorAll(".nav-item").forEach((el, i) => {
+      el.classList.toggle("active", i === (name === "dashboard" ? 0 : 1));
+    });
+    closeSidebar();
+  }
+
+  function toggleSidebar() {
+    const sb = document.getElementById("sidebar");
+    const ov = document.getElementById("overlayBg");
+    sb.classList.toggle("open");
+    ov.classList.toggle("show");
+  }
+  function closeSidebar() {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("overlayBg").classList.remove("show");
+  }
+
+  function logout() {
+    clearAuth();
+    window.location.href = "login.html";
+  }
+
+  // ── Load dashboard stats ───────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const data = await apiFetch("/expenses/dashboard");
+      const { total, categories, recent } = data;
+
+      document.getElementById("statTotal").textContent = formatCurrency(total);
+
+      // Month total – filter from allExpenses later; use categories sum here
+      const catSum = categories.reduce((s, c) => s + Number(c.total), 0);
+      document.getElementById("statCats").textContent  = categories.length;
+
+      // Category breakdown
+      const catEl = document.getElementById("categoryBreakdown");
+      if (!categories.length) {
+        catEl.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem">No data yet.</p>';
+      } else {
+        const maxAmt = Math.max(...categories.map(c => Number(c.total)));
+        catEl.innerHTML = categories.map(c => `
+          <div class="category-row">
+            <div class="cat-header">
+              <span class="cat-name">${catEmoji(c.category)} ${c.category}</span>
+              <span class="cat-amount">${formatCurrency(c.total)}</span>
+            </div>
+            <div class="cat-bar">
+              <div class="cat-bar-fill" style="width:${(Number(c.total)/maxAmt*100).toFixed(1)}%"></div>
+            </div>
+          </div>`).join("");
+      }
+
+      // Recent transactions
+      const recEl = document.getElementById("recentTxns");
+      if (!recent.length) {
+        recEl.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem">No transactions yet.</p>';
+      } else {
+        recEl.innerHTML = recent.map(t => `
+          <div class="txn-item">
+            <div class="txn-icon">${catEmoji(t.category)}</div>
+            <div class="txn-info">
+              <div class="txn-name">${t.description || t.category}</div>
+              <div class="txn-date">${formatDate(t.date)}</div>
+            </div>
+            <div class="txn-amount">-${formatCurrency(t.amount)}</div>
+          </div>`).join("");
+      }
+    } catch (err) {
+      console.error("Dashboard load failed:", err);
+    }
+  }
+
+  // ── Load all expenses ──────────────────────────────────────
+  async function loadExpenses() {
+    try {
+      const data = await apiFetch("/expenses");
+      allExpenses = data.expenses;
+
+      // Update stat cards that need full list
+      const now   = new Date();
+      const month = allExpenses.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      const monthTotal = month.reduce((s, e) => s + Number(e.amount), 0);
+
+      document.getElementById("statMonth").textContent = formatCurrency(monthTotal);
+      document.getElementById("statCount").textContent = allExpenses.length;
+
+      renderExpenseTable();
+    } catch (err) {
+      console.error("Expense load failed:", err);
+    }
+  }
+
+  // ── Render expense table ───────────────────────────────────
+  function renderExpenseTable() {
+    const tbody = document.getElementById("expenseTableBody");
+    if (!allExpenses.length) {
+      tbody.innerHTML = `<tr><td colspan="5">
+        <div class="empty-state">
+          <div class="empty-icon">💼</div>
+          <p>No expenses yet. Add your first one!</p>
+        </div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = allExpenses.map(e => `
+      <tr>
+        <td>${formatDate(e.date)}</td>
+        <td><span class="badge">${catEmoji(e.category)} ${e.category}</span></td>
+        <td>${e.description || '<span style="color:var(--text-dim)">—</span>'}</td>
+        <td class="amount">-${formatCurrency(e.amount)}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-outline btn-sm" onclick="openEditModal(${e.id})">✏️ Edit</button>
+            <button class="btn btn-danger btn-sm"  onclick="openDeleteModal(${e.id})">🗑️</button>
+          </div>
+        </td>
+      </tr>`).join("");
+  }
+
+  // ── Modal: Add ─────────────────────────────────────────────
+  function openAddModal() {
+    document.getElementById("modalTitle").textContent    = "Add Expense";
+    document.getElementById("saveExpenseBtn").textContent = "Save Expense";
+    document.getElementById("editId").value   = "";
+    document.getElementById("expAmount").value  = "";
+    document.getElementById("expCategory").value = "";
+    document.getElementById("expDate").value    = new Date().toISOString().slice(0, 10);
+    document.getElementById("expDesc").value    = "";
+    document.getElementById("modalAlert").classList.remove("show");
+    document.getElementById("expenseModal").classList.add("open");
+    closeSidebar();
+  }
+
+  // ── Modal: Edit ────────────────────────────────────────────
+  function openEditModal(id) {
+    const expense = allExpenses.find(e => e.id === id);
+    if (!expense) return;
+
+    document.getElementById("modalTitle").textContent    = "Edit Expense";
+    document.getElementById("saveExpenseBtn").textContent = "Update Expense";
+    document.getElementById("editId").value      = expense.id;
+    document.getElementById("expAmount").value   = expense.amount;
+    document.getElementById("expCategory").value = expense.category;
+    document.getElementById("expDate").value     = expense.date.slice(0, 10);
+    document.getElementById("expDesc").value     = expense.description || "";
+    document.getElementById("modalAlert").classList.remove("show");
+    document.getElementById("expenseModal").classList.add("open");
+  }
+
+  function closeModal() {
+    document.getElementById("expenseModal").classList.remove("open");
+  }
+
+  // ── Save expense (add or edit) ─────────────────────────────
+  async function saveExpense() {
+    const id       = document.getElementById("editId").value;
+    const amount   = document.getElementById("expAmount").value;
+    const category = document.getElementById("expCategory").value;
+    const date     = document.getElementById("expDate").value;
+    const description = document.getElementById("expDesc").value.trim();
+    const alertEl  = document.getElementById("modalAlert");
+    const btn      = document.getElementById("saveExpenseBtn");
+
+    if (!amount || !category || !date) {
+      return showAlert(alertEl, "Amount, category and date are required.");
+    }
+
+    const isEdit = !!id;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span>';
+
+    try {
+      const payload = { amount, category, date, description };
+      if (isEdit) {
+        await apiFetch(`/expenses/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+      } else {
+        await apiFetch("/expenses", { method: "POST", body: JSON.stringify(payload) });
+      }
+
+      closeModal();
+      showAlert(document.getElementById("expenseAlert"),
+        isEdit ? "Expense updated!" : "Expense added!", "success");
+      await loadDashboard();
+      await loadExpenses();
+    } catch (err) {
+      showAlert(alertEl, err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = isEdit ? "Update Expense" : "Save Expense";
+    }
+  }
+
+  // ── Delete modal ───────────────────────────────────────────
+  function openDeleteModal(id) {
+    deleteTargetId = id;
+    document.getElementById("deleteModal").classList.add("open");
+  }
+  function closeDeleteModal() {
+    deleteTargetId = null;
+    document.getElementById("deleteModal").classList.remove("open");
+  }
+  async function confirmDelete() {
+    if (!deleteTargetId) return;
+    const btn = document.getElementById("confirmDeleteBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span>';
+
+    try {
+      await apiFetch(`/expenses/${deleteTargetId}`, { method: "DELETE" });
+      closeDeleteModal();
+      showAlert(document.getElementById("expenseAlert"), "Expense deleted.", "success");
+      await loadDashboard();
+      await loadExpenses();
+    } catch (err) {
+      closeDeleteModal();
+      showAlert(document.getElementById("expenseAlert"), err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Yes, delete";
+    }
+  }
+
+  // Close modal on overlay click
+  document.getElementById("expenseModal").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.getElementById("deleteModal").addEventListener("click", function(e) {
+    if (e.target === this) closeDeleteModal();
+  });
+</script>
+</body>
+</html>

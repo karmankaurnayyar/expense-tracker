@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up – ExpenseIQ</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">💰</div>
+      <span>ExpenseIQ</span>
+    </div>
+
+    <h1>Create account</h1>
+    <p class="subtitle">Start tracking your expenses today</p>
+
+    <div class="alert" id="alertBox"></div>
+
+    <div class="form-group">
+      <label for="name">Full name</label>
+      <input type="text" id="name" placeholder="Jane Doe" autocomplete="name"/>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password <span style="color:var(--text-dim);font-weight:400">(min. 6 chars)</span></label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="signupBtn" onclick="handleSignup()">
+      Create account
+    </button>
+
+    <p style="text-align:center; margin-top:1.2rem; font-size:.88rem; color:var(--text-muted);">
+      Already have an account?
+      <a href="login.html">Log in</a>
+    </p>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    redirectIfLoggedIn();
+
+    async function handleSignup() {
+      const name     = document.getElementById("name").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const alertEl  = document.getElementById("alertBox");
+      const btn      = document.getElementById("signupBtn");
+
+      if (!name || !email || !password) {
+        return showAlert(alertEl, "Please fill in all fields.");
+      }
+      if (password.length < 6) {
+        return showAlert(alertEl, "Password must be at least 6 characters.");
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Creating account…';
+
+      try {
+        const data = await apiFetch("/auth/signup", {
+          method: "POST",
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        setToken(data.token);
+        setUser(data.user);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        showAlert(alertEl, err.message);
+        btn.disabled = false;
+        btn.textContent = "Create account";
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") handleSignup();
+    });
+  </script>
+</body>
+</html>

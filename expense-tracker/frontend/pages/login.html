@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – ExpenseIQ</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="logo-icon">💰</div>
+      <span>ExpenseIQ</span>
+    </div>
+
+    <h1>Welcome back</h1>
+    <p class="subtitle">Log in to track your spending</p>
+
+    <!-- Alert box -->
+    <div class="alert" id="alertBox"></div>
+
+    <!-- Login form -->
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="loginBtn" onclick="handleLogin()">
+      Log in
+    </button>
+
+    <p style="text-align:center; margin-top:1.2rem; font-size:.88rem; color:var(--text-muted);">
+      Don't have an account?
+      <a href="signup.html">Sign up</a>
+    </p>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // Redirect if already logged in
+    redirectIfLoggedIn();
+
+    async function handleLogin() {
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const alert    = document.getElementById("alertBox");
+      const btn      = document.getElementById("loginBtn");
+
+      if (!email || !password) {
+        return showAlert(alert, "Please fill in all fields.");
+      }
+
+      // Show loading state
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Logging in…';
+
+      try {
+        const data = await apiFetch("/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        });
+
+        setToken(data.token || data.accessToken);
+        setUser(data.user);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        showAlert(alert, err.message);
+        btn.disabled = false;
+        btn.textContent = "Log in";
+      }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") handleLogin();
+    });
+  </script>
+</body>
+</html>
